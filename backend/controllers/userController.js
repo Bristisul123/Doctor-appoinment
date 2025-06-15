@@ -4,6 +4,7 @@ import userModel from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 import { v2 as cloudinary } from "cloudinary";
 import doctorModel from "../models/doctorModel.js";
+import appointmentModel from "../models/appointmentModel.js";
 
 // API to register
 
@@ -119,7 +120,8 @@ const updateProfile = async (req, res) => {
 //API to book appointment
 const bookAppointment = async (req, res) => {
   try {
-    const { userId, docId, slotDate, slotTime } = req.body;
+    const userId = req.userId;
+    const { docId, slotDate, slotTime } = req.body;
 
     const docData = await doctorModel.findById(docId).select("-password");
 
@@ -157,10 +159,33 @@ const bookAppointment = async (req, res) => {
     };
     const newAppointment = new appointmentModel(appointmentData);
     await newAppointment.save();
+
+    // save new slots
+    await doctorModel.findByIdAndUpdate(docId,{slots_booked})
+
+    res.json({success:true,message:'Appointment Booked'})
+
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
   }
 };
 
-export { registerUser, loginUser, getProfile, updateProfile };
+// ApI to get appointment page
+
+const listAppointment = async (req,res) => {
+   
+  try {
+    
+    const userId = req.userId
+    const appointments = await appointmentModel.find({userId})
+
+    res.json({success:true,appointments})
+
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+}
+
+export { registerUser, loginUser, getProfile, updateProfile, bookAppointment, listAppointment };
