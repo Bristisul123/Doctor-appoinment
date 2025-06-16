@@ -3,7 +3,10 @@ import {
   registerUser,
   loginUser,
   getProfile,
-  updateProfile,bookAppointment,listAppointment
+  updateProfile,
+  bookAppointment,
+  listAppointment,
+  cancelAppointment,
 } from "../controllers/userController.js";
 import authUser from "../middlewares/authUser.js";
 import upload from "../middlewares/multer.js";
@@ -19,7 +22,8 @@ userRouter.post(
   upload.single("image"),
   updateProfile
 );
-userRouter.post('/book-appointment',authUser,bookAppointment)
-userRouter.get('/appointments',authUser,listAppointment)
+userRouter.post("/book-appointment", authUser, bookAppointment);
+userRouter.get("/appointments", authUser, listAppointment);
+userRouter.get("/cancel-appointment", authUser, cancelAppointment);
 
 export default userRouter;
