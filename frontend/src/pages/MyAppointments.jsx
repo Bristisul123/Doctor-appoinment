@@ -3,42 +3,76 @@ import { AppContext } from "../context/AppContext";
 import { useState } from "react";
 import axios from "axios";
 import { useEffect } from "react";
+import { toast } from "react-toastify";
 
 function MyAppointments() {
-
-  const { backendUrl, token } = useContext(AppContext);
+  const { backendUrl, token, getDoctorsData } = useContext(AppContext);
   // console.log("doctors from context:", doctors);
 
-  const [appointments,setAppointments] = useState([])
-  const months = ["","Jan","Feb","Mar","Apr","May", "Jun","Jul", "Aug", "Sep", "Oct","Nov", "Dec"]
+  const [appointments, setAppointments] = useState([]);
+  const months = [
+    "",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   const slotDateFormate = (slotDate) => {
-    const dateArray = slotDate.split('_')
-    return dateArray[0] + " " + months[Number(dateArray[1])] +" " + dateArray[2]
-  }
+    const dateArray = slotDate.split("_");
+    return (
+      dateArray[0] + " " + months[Number(dateArray[1])] + " " + dateArray[2]
+    );
+  };
 
   const getUserAppointments = async () => {
     try {
-      
-      const {data} = await axios.get(backendUrl+'/api/user/appointments',{headers:{token}})
+      const { data } = await axios.get(backendUrl + "/api/user/appointments", {
+        headers: { token },
+      });
 
-      if(data.success){
-        setAppointments(data.appointments.reverse())
-       console.log(data.appointments);
-       
+      if (data.success) {
+        setAppointments(data.appointments.reverse());
+        console.log(data.appointments);
       }
-
     } catch (error) {
-      console.log(error)
-      toast.error(error.message)
-      
+      console.log(error);
+      toast.error(error.message);
     }
-  }
+  };
 
-  useEffect(()=>{
-    if(token){
-      getUserAppointments()
+  const cancelAppointment = async (appointmentId) => {
+    try {
+      const { data } = await axios.post(
+        backendUrl + "/api/user/cancel-appointment",
+        { appointmentId },
+        { headers: { token } }
+      );
+      if (data.success) {
+        toast.success(data.message);
+        getUserAppointments();
+        getDoctorsData();
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
     }
-  },[token])
+  };
+
+  useEffect(() => {
+    if (token) {
+      getUserAppointments();
+    }
+  }, [token]);
 
   return (
     <div>
@@ -52,10 +86,16 @@ function MyAppointments() {
             key={index}
           >
             <div>
-              <img className="w-32 bg-indigo-50" src={item.docData?.image} alt="" />
+              <img
+                className="w-32 bg-indigo-50"
+                src={item.docData?.image}
+                alt=""
+              />
             </div>
             <div className="flex-1 text-sm text-zinc-600">
-              <p className="text-neutral-800 font-semibold ">{item.docData?.name}</p>
+              <p className="text-neutral-800 font-semibold ">
+                {item.docData?.name}
+              </p>
               <p>{item.docData?.speciality}</p>
               <p className="text-zinc-700 font-medium mt-1">Address:</p>
               <p className="text-xs">{item.docData?.address.line1}</p>
@@ -69,12 +109,25 @@ function MyAppointments() {
             </div>
             <div></div>
             <div className="flex flex-col gap-2 justify-end">
-              <button className="text-sm text-stone-500 text-center sm:min-w-48 py-2 border hover:bg-primary hover:text-white transition-all duration-300">
-                Pay Online
-              </button>
-              <button className="text-sm text-stone-500 text-center sm:min-w-48 py-2 border hover:bg-red-600 hover:text-white transition-all duration-300">
-                Cancel Appointment
-              </button>
+              {!item.cancelled && (
+                <button className="text-sm text-stone-500 text-center sm:min-w-48 py-2 border hover:bg-primary hover:text-white transition-all duration-300">
+                  Pay Online
+                </button>
+              )}
+
+              {!item.cancelled && (
+                <button
+                  onClick={() => cancelAppointment(item._id)}
+                  className="text-sm text-stone-500 text-center sm:min-w-48 py-2 border hover:bg-red-600 hover:text-white transition-all duration-300"
+                >
+                  Cancel Appointment
+                </button>
+              )}
+              {item.cancelled && (
+                <button className="sm:min-w-48 py-2 border border-red-500 rounded text-red-500">
+                  Appointment Cancelled
+                </button>
+              )}
             </div>
           </div>
         ))}
