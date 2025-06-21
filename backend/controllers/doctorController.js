@@ -5,7 +5,7 @@ import appointmentModel from "../models/appointmentModel.js";
 
 const changeAvailability = async (req, res) => {
   try {
-    const docId = req.docId;
+    const { docId, fees, address, available } = req.body;
     const docData = await doctorModel.findById(docId);
     await doctorModel.findByIdAndUpdate(docId, {
       available: !docData.available,
@@ -109,81 +109,70 @@ const appointmentCancel = async (req, res) => {
   }
 };
 
-
 // Dashboard for doctor
 
-const doctorDashboard = async (req,res) => {
+const doctorDashboard = async (req, res) => {
   try {
-    const {docId} = req.docId
-    const appointments = await appointmentModel.find({doctorId: docId})
-    
+    const { docId } = req.docId;
+    const appointments = await appointmentModel.find({ doctorId: docId });
+
     let earnings = 0;
-    appointments.map((item)=>{
-        if(item.isCompleted || item.payment){
-            earnings += item.amount
-        }
-    })
+    appointments.map((item) => {
+      if (item.isCompleted || item.payment) {
+        earnings += item.amount;
+      }
+    });
 
-    let patients = []
+    let patients = [];
 
-    appointments.map((item)=>{
-        if(!patients.includes(item.userId)){
-          patients.push(item.userId)
-        }
-    })
- 
-   const dashData = {
-    earnings,
-    appointments: appointments.length,
-    patients: patients.length,
-    latestAppointment: appointments.reverse().slice(0,5)  // singular to match React
-  }
+    appointments.map((item) => {
+      if (!patients.includes(item.userId)) {
+        patients.push(item.userId);
+      }
+    });
 
-    res.json({success:true, dashData})
+    const dashData = {
+      earnings,
+      appointments: appointments.length,
+      patients: patients.length,
+      latestAppointment: appointments.reverse().slice(0, 5), // singular to match React
+    };
 
-
+    res.json({ success: true, dashData });
   } catch (error) {
-     console.log(error);
-     res.json({ success: false, message: error.message });
-  
+    console.log(error);
+    res.json({ success: false, message: error.message });
   }
-}
-
+};
 
 // Doctor Profile for Doctor panel
 
-const doctorProfile = async (req,res) =>{
+const doctorProfile = async (req, res) => {
   try {
+    const docId = req.docId;
+    const profileData = await doctorModel.findById(docId).select("-password");
 
-    const docId = req.docId
-    const profileData = await doctorModel.findById(docId).select('-password')
-    
-    res.json({success:true,profileData})
-    
+    res.json({ success: true, profileData });
   } catch (error) {
-     console.log(error);
-     res.json({ success: false, message: error.message });
-  
+    console.log(error);
+    res.json({ success: false, message: error.message });
   }
-}
+};
 
 // Api to update doctor profile
 
-const updateDoctorProfile = async (req, res) =>{
+const updateDoctorProfile = async (req, res) => {
   try {
+    const docId = req.docId;
+    const { fees, address, available } = req.body;
+    await doctorModel.findByIdAndUpdate(docId, { fees, address, available });
 
-     const docId = req.docId; 
-     const { fees, address, available } = req.body;
-     await doctorModel.findByIdAndUpdate(docId,{fees, address, available})
-
-     res.json({success:true, message:'Profile Updated'})
-    
+    res.json({ success: true, message: "Profile Updated" });
   } catch (error) {
-     console.log(error);
-     res.json({ success: false, message: error.message });
-  
+    console.log(error);
+    res.json({ success: false, message: error.message });
   }
-}
+};
 export {
   changeAvailability,
   doctorList,
@@ -193,5 +182,5 @@ export {
   appointmentComplete,
   doctorDashboard,
   doctorProfile,
-  updateDoctorProfile
+  updateDoctorProfile,
 };
